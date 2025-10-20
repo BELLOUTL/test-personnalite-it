@@ -1,606 +1,237 @@
-import React, { useState } from 'react';
-import { CheckCircle, User, Award, TrendingUp } from 'lucide-react';
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Test de personnalité — Techniciens & Administrateurs IT (auto-évalué)</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#06b6d4;--glass: rgba(255,255,255,0.03)}
+    body{font-family:Inter,Helvetica,Arial; margin:0; background:linear-gradient(180deg,#071129 0%, #0b1220 100%); color:#e6eef6}
+    .wrap{max-width:980px;margin:28px auto;padding:24px}
+    header{display:flex;align-items:center;gap:16px}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 18px;color:var(--muted)}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 24px rgba(2,6,23,0.6)}
+    .questions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+    .q{background:var(--glass);padding:12px;border-radius:8px;display:flex;flex-direction:column}
+    .q h4{margin:0 0 8px;font-size:15px}
+    .scale{display:flex;gap:8px;align-items:center}
+    label.scale-btn{flex:1;background:#0b1320;padding:8px;border-radius:6px;text-align:center;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
+    input[type=radio]{display:none}
+    input[type=radio]:checked + .scale-btn{background:linear-gradient(90deg,#042e36,#044e5b);box-shadow:0 4px 14px rgba(3,110,123,0.25)}
+    .actions{display:flex;gap:8px;margin-top:14px}
+    button{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:#052025;font-weight:600;cursor:pointer}
+    button.secondary{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04)}
+    .results{margin-top:18px}
+    .dim{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:12px;border-radius:8px;margin-bottom:10px}
+    .dim h5{margin:0 0 6px}
+    .bar{height:10px;background:#071827;border-radius:8px;overflow:hidden}
+    .fill{height:100%;background:linear-gradient(90deg,#06b6d4,#0ea5a0);width:0%}
+    .summary{white-space:pre-wrap;background:#03121a;padding:12px;border-radius:8px;font-size:14px;color:var(--muted)}
+    footer{color:var(--muted);font-size:13px;margin-top:16px}
+    @media(min-width:720px){.questions{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Test de personnalité — Techniciens & Administrateurs IT (auto‑évalué)</h1>
+        <p class="lead">20 questions courtes. Évaluez-vous honnêtement sur une échelle de 1 (pas du tout) à 5 (tout à fait). Le test calcule six dimensions clés et propose une analyse et des axes d'amélioration.</p>
+      </div>
+    </header>
 
-const questions = [
-  {
-    id: 1,
-    text: "Face à un serveur qui ne répond plus, votre première action :",
-    options: [
-      { text: "Vérifier les logs système pour identifier la cause", profile: "analytique" },
-      { text: "Redémarrer le service pour rétablir rapidement", profile: "pragmatique" },
-      { text: "Contacter l'équipe pour éviter les impacts", profile: "communicant" },
-      { text: "Basculer sur le serveur de secours immédiatement", profile: "preventif" }
-    ]
-  },
-  {
-    id: 2,
-    text: "Pour apprendre une nouvelle technologie (VMware, Docker, etc.) :",
-    options: [
-      { text: "Je lis la documentation technique complète", profile: "methodique" },
-      { text: "Je monte un lab et j'expérimente directement", profile: "experimentateur" },
-      { text: "Je suis des formations certifiantes", profile: "structure" },
-      { text: "J'étudie des architectures existantes", profile: "observateur" }
-    ]
-  },
-  {
-    id: 3,
-    text: "Dans votre rôle, vous préférez gérer :",
-    options: [
-      { text: "L'infrastructure et l'architecture réseau", profile: "architecte" },
-      { text: "Les opérations quotidiennes et le support", profile: "operateur" },
-      { text: "Les projets de migration et modernisation", profile: "innovateur" },
-      { text: "La sécurité et la conformité", profile: "securitaire" }
-    ]
-  },
-  {
-    id: 4,
-    text: "Face à une infrastructure vieillissante :",
-    options: [
-      { text: "Je planifie une refonte complète", profile: "visionnaire" },
-      { text: "Je maintiens et optimise l'existant", profile: "mainteneur" },
-      { text: "Je documente les risques pour la direction", profile: "communicant" },
-      { text: "Je migre progressivement par étapes", profile: "strategique" }
-    ]
-  },
-  {
-    id: 5,
-    text: "Dans la gestion de vos systèmes, vous privilégiez :",
-    options: [
-      { text: "La stabilité et la fiabilité avant tout", profile: "prudent" },
-      { text: "Les performances et l'optimisation", profile: "optimiseur" },
-      { text: "L'automatisation et la simplicité", profile: "automatiseur" },
-      { text: "L'évolutivité et la scalabilité", profile: "scaleur" }
-    ]
-  },
-  {
-    id: 6,
-    text: "Un utilisateur signale un problème de connexion réseau :",
-    options: [
-      { text: "Je diagnostique méthodiquement chaque couche OSI", profile: "methodique" },
-      { text: "Je teste les solutions habituelles rapidement", profile: "pragmatique" },
-      { text: "Je vérifie si d'autres utilisateurs sont impactés", profile: "globaliste" },
-      { text: "Je documente le ticket et procède par étapes", profile: "organisateur" }
-    ]
-  },
-  {
-    id: 7,
-    text: "Votre approche de la supervision (monitoring) :",
-    options: [
-      { text: "Alertes sur tous les paramètres critiques", profile: "vigilant" },
-      { text: "Monitoring ciblé sur les services essentiels", profile: "selectif" },
-      { text: "Dashboards complets avec métriques détaillées", profile: "analytique" },
-      { text: "Automatisation des actions correctives", profile: "automatiseur" }
-    ]
-  },
-  {
-    id: 8,
-    text: "Lors d'une maintenance planifiée qui se complique :",
-    options: [
-      { text: "J'applique la procédure de rollback", profile: "prudent" },
-      { text: "Je cherche une solution pour finaliser", profile: "perseverant" },
-      { text: "Je communique sur le délai supplémentaire", profile: "transparent" },
-      { text: "J'active le plan de contingence", profile: "preventif" }
-    ]
-  },
-  {
-    id: 9,
-    text: "Votre environnement de travail idéal :",
-    options: [
-      { text: "Salle serveur calme avec mes systèmes", profile: "technique" },
-      { text: "Bureau avec interactions équipe IT", profile: "collaboratif" },
-      { text: "Mixte : remote et on-site", profile: "flexible" },
-      { text: "Peu importe tant que j'ai mes outils", profile: "adaptable" }
-    ]
-  },
-  {
-    id: 10,
-    text: "Un collègue moins expérimenté vous sollicite :",
-    options: [
-      { text: "Je lui explique la théorie et la pratique", profile: "pedagogique" },
-      { text: "Je lui montre où trouver l'information", profile: "autonomiseur" },
-      { text: "On résout le problème ensemble", profile: "collaboratif" },
-      { text: "Je règle rapidement pour qu'il observe", profile: "efficace" }
-    ]
-  },
-  {
-    id: 11,
-    text: "Pour choisir entre deux solutions techniques :",
-    options: [
-      { text: "Comparatif détaillé avec benchmark", profile: "analytique" },
-      { text: "Je m'appuie sur mon expérience passée", profile: "experientiel" },
-      { text: "Je choisis la plus répandue du marché", profile: "consensus" },
-      { text: "J'opte pour la plus moderne et évolutive", profile: "innovateur" }
-    ]
-  },
-  {
-    id: 12,
-    text: "Votre rapport à la documentation technique :",
-    options: [
-      { text: "Je documente toutes mes interventions", profile: "rigoureux" },
-      { text: "Je documente les procédures importantes", profile: "selectif" },
-      { text: "Mon infrastructure est auto-documentée", profile: "automatiseur" },
-      { text: "Je préfère des schémas et topologies", profile: "visuel" }
-    ]
-  },
-  {
-    id: 13,
-    text: "Un utilisateur demande des droits administrateur :",
-    options: [
-      { text: "Je refuse en expliquant les risques", profile: "securitaire" },
-      { text: "Je propose une alternative sécurisée", profile: "constructif" },
-      { text: "J'évalue le besoin réel avec lui", profile: "diplomatique" },
-      { text: "J'accorde temporairement avec monitoring", profile: "flexible" }
-    ]
-  },
-  {
-    id: 14,
-    text: "Avec plusieurs tickets urgents simultanés :",
-    options: [
-      { text: "Je les priorise selon une matrice impact/urgence", profile: "strategique" },
-      { text: "Je traite le plus critique en premier", profile: "focalisé" },
-      { text: "Je les dispatche entre collègues", profile: "coordinateur" },
-      { text: "Je traite plusieurs en parallèle", profile: "multitache" }
-    ]
-  },
-  {
-    id: 15,
-    text: "Face à un ancien système critique non documenté :",
-    options: [
-      { text: "Je planifie sa migration vers du moderne", profile: "modernisateur" },
-      { text: "J'analyse et documente son fonctionnement", profile: "investigateur" },
-      { text: "Je le maintiens en l'état sans y toucher", profile: "conservateur" },
-      { text: "Je le virtualise pour faciliter la gestion", profile: "innovateur" }
-    ]
-  },
-  {
-    id: 16,
-    text: "Après un incident majeur :",
-    options: [
-      { text: "J'organise un post-mortem détaillé", profile: "analytique" },
-      { text: "Je corrige immédiatement les failles", profile: "reactif" },
-      { text: "Je partage le REX avec toute l'équipe", profile: "communicant" },
-      { text: "J'implémente des solutions préventives", profile: "preventif" }
-    ]
-  },
-  {
-    id: 17,
-    text: "Dans l'audit d'une infrastructure existante :",
-    options: [
-      { text: "Je vérifie la conformité aux normes", profile: "normalisateur" },
-      { text: "J'identifie les points d'amélioration", profile: "ameliorateur" },
-      { text: "Je mesure les performances actuelles", profile: "evaluateur" },
-      { text: "Je valide la sécurité et les risques", profile: "securitaire" }
-    ]
-  },
-  {
-    id: 18,
-    text: "Votre veille technologique se concentre sur :",
-    options: [
-      { text: "Les nouvelles solutions et tendances", profile: "innovateur" },
-      { text: "Les mises à jour de sécurité critiques", profile: "vigilant" },
-      { text: "Les retours d'expérience de la communauté", profile: "communautaire" },
-      { text: "Les besoins spécifiques de mon infrastructure", profile: "pragmatique" }
-    ]
-  },
-  {
-    id: 19,
-    text: "Face à une deadline pour une mise à jour majeure :",
-    options: [
-      { text: "Je négocie un délai réaliste", profile: "realiste" },
-      { text: "Je mobilise l'équipe pour y arriver", profile: "meneur" },
-      { text: "Je découpe en phases déployables", profile: "strategique" },
-      { text: "J'intensifie mon rythme de travail", profile: "combatif" }
-    ]
-  },
-  {
-    id: 20,
-    text: "Ce qui vous motive le plus dans votre métier :",
-    options: [
-      { text: "Résoudre des problèmes techniques complexes", profile: "problem_solver" },
-      { text: "Garantir la disponibilité des services", profile: "garant" },
-      { text: "Implémenter de nouvelles technologies", profile: "innovateur" },
-      { text: "Travailler en équipe sur des projets", profile: "teamplayer" }
-    ]
-  }
-];
+    <div class="card">
+      <form id="testForm">
+        <div class="questions" id="questions"></div>
 
-const profiles = {
-  analytique: { 
-    name: "L'Analyste", 
-    description: "Vous excellez dans l'analyse méthodique et la résolution de problèmes complexes. Votre approche systématique vous permet d'identifier les causes racines et d'anticiper les conséquences de vos actions.",
-    strengths: "Diagnostic précis grâce à une méthodologie structurée • Capacité à gérer des incidents complexes multi-facteurs • Excellente anticipation des problèmes potentiels • Documentation détaillée facilitant les interventions futures",
-    advice: "En situation d'urgence critique, n'hésitez pas à appliquer une solution de contournement rapide avant l'analyse complète. Équilibrez analyse et action pour optimiser votre temps de résolution.",
-    ideal_for: "Architecte système, Expert troubleshooting, Responsable infrastructure critique",
-    team_value: "Vous apportez rigueur et profondeur d'analyse. Votre méthodologie structure les interventions complexes et forme les juniors aux bonnes pratiques de diagnostic.",
-    growth_areas: "Développez votre capacité à prendre des décisions rapides avec information partielle. Pratiquez le 'quick wins' sur des incidents mineurs pour gagner en agilité."
-  },
-  pragmatique: { 
-    name: "Le Pragmatique", 
-    description: "Vous privilégiez l'action efficace et les solutions concrètes. Votre expérience vous permet d'identifier rapidement les interventions les plus pertinentes sans perdre de temps.",
-    strengths: "Résolution rapide des incidents grâce à votre expérience terrain • Excellente gestion du stress en situation de crise • Capacité à prioriser l'urgent et l'essentiel • Adaptation rapide aux contextes changeants",
-    advice: "Investissez du temps dans la documentation de vos interventions pour construire une base de connaissances réutilisable. Votre expertise gagnerait à être capitalisée et partagée systématiquement.",
-    ideal_for: "Technicien support N3, Administrateur production, Responsable exploitation",
-    team_value: "Vous êtes le pompier de l'équipe, capable de rétablir rapidement les services critiques. Votre sang-froid inspire confiance lors des incidents majeurs.",
-    growth_areas: "Formalisez vos connaissances tacites en procédures. Prenez le temps d'analyser les causes profondes pour éviter les récurrences d'incidents."
-  },
-  preventif: { 
-    name: "Le Préventif", 
-    description: "Vous anticipez les risques et préparez des plans de contingence. Votre vision proactive minimise les incidents et garantit la continuité de service.",
-    strengths: "Plans de reprise d'activité (PRA/PCA) bien préparés • Identification précoce des points de défaillance uniques (SPOF) • Excellente gestion des changements avec analyse d'impact • Culture de la documentation et des procédures",
-    advice: "Veillez à ne pas freiner l'innovation par excès de prudence. Toutes les évolutions ne nécessitent pas le même niveau de préparation. Adaptez votre approche au niveau de risque réel.",
-    ideal_for: "Responsable continuité de service, Architecte infrastructure, Risk Manager IT",
-    team_value: "Vous sécurisez l'infrastructure en pensant aux scénarios catastrophes. Votre planification évite les mauvaises surprises et protège l'entreprise.",
-    growth_areas: "Cultivez l'agilité en acceptant des déploiements progressifs. Pratiquez l'approche 'fail fast' sur des environnements non critiques pour gagner en flexibilité."
-  },
-  methodique: { 
-    name: "Le Méthodique", 
-    description: "Vous suivez des processus rigoureux et structurés. Votre approche ITIL garantit qualité et traçabilité de toutes vos interventions.",
-    strengths: "Interventions reproductibles et auditables • Respect scrupuleux des processus de changement • Qualité constante indépendante de la pression • Formation efficace grâce à des procédures claires",
-    advice: "Certaines situations d'urgence nécessitent de court-circuiter temporairement les processus standards. Développez votre capacité à identifier quand la rigueur doit céder face à l'urgence critique.",
-    ideal_for: "Responsable processus IT, Coordinateur ITSM, Manager d'équipe technique",
-    team_value: "Vous garantissez conformité et traçabilité. Votre structuration professionnalise les pratiques de l'équipe et facilite les audits.",
-    growth_areas: "Développez votre tolérance à l'ambiguïté et à l'improvisation. Expérimentez des approches plus agiles sur des projets pilotes pour élargir votre palette."
-  },
-  automatiseur: { 
-    name: "L'Automatiseur", 
-    description: "Vous cherchez constamment à optimiser et automatiser les tâches répétitives. Votre vision DevOps transforme les opérations manuelles en processus efficaces.",
-    strengths: "Scripts et automatisations augmentant l'efficacité opérationnelle • Maîtrise des outils d'orchestration (Ansible, Terraform, PowerShell) • Réduction drastique des erreurs humaines • Vision Infrastructure as Code (IaC)",
-    advice: "Documentez systématiquement vos automatisations pour éviter les 'boîtes noires'. Assurez-vous que vos collègues peuvent comprendre et maintenir vos scripts en votre absence.",
-    ideal_for: "DevOps Engineer, Administrateur systèmes avancé, Architecte automatisation",
-    team_value: "Vous libérez du temps pour toute l'équipe en éliminant les tâches à faible valeur ajoutée. Vos automatisations permettent de scaler les opérations.",
-    growth_areas: "Équilibrez automatisation et flexibilité. Certaines tâches peu fréquentes ne justifient pas l'investissement temps. Priorisez selon le ROI réel."
-  },
-  innovateur: { 
-    name: "L'Innovateur", 
-    description: "Vous êtes attiré par les nouvelles technologies et la modernisation continue. Votre veille active maintient l'infrastructure à jour avec les meilleures pratiques du marché.",
-    strengths: "Veille technologique proactive et pertinente • Capacité à évaluer rapidement de nouvelles solutions • Pilotage de projets de transformation technique • Vision prospective de l'évolution des systèmes",
-    advice: "Toute technologie n'est pas bonne à adopter. Évaluez maturité, coûts cachés et impact organisationnel. Privilégiez innovation incrémentale sur refonte totale pour limiter les risques.",
-    ideal_for: "Lead technique, Architecte solutions, Responsable innovation IT",
-    team_value: "Vous maintenez la compétitivité technique de l'organisation. Vos explorations évitent l'obsolescence et ouvrent de nouvelles possibilités.",
-    growth_areas: "Renforcez votre pragmatisme en équilibrant 'shiny new tech' et stabilité opérationnelle. Apprenez à valoriser l'excellence sur les systèmes existants."
-  },
-  securitaire: { 
-    name: "Le Gardien", 
-    description: "La sécurité et la conformité sont vos priorités absolues. Votre vigilance protège l'entreprise contre les menaces internes et externes.",
-    strengths: "Vision holistique de la sécurité (défense en profondeur) • Maîtrise des standards et réglementations (ISO 27001, RGPD) • Gestion proactive des vulnérabilités et des patches • Culture du moindre privilège et de la segmentation",
-    advice: "La sécurité doit être un facilitateur, pas un frein. Travaillez avec les utilisateurs pour trouver des solutions sécurisées ET utilisables. L'excès de contraintes crée des contournements risqués.",
-    ideal_for: "Administrateur sécurité, Responsable conformité IT, Architecte cybersécurité",
-    team_value: "Vous protégez l'entreprise et ses données. Votre rigueur évite les incidents de sécurité coûteux et garantit la conformité réglementaire.",
-    growth_areas: "Développez votre intelligence situationnelle pour adapter le niveau de sécurité au contexte métier. Pratiquez l'approche 'security by design' plutôt que 'security by constraint'."
-  },
-  communicant: { 
-    name: "Le Communicant", 
-    description: "Vous excellez dans la communication technique et la coordination. Votre capacité à vulgariser et à fédérer fait de vous un lien essentiel entre IT et métiers.",
-    strengths: "Excellente gestion de la relation utilisateurs • Capacité à traduire le technique en langage métier • Animation efficace de réunions et d'ateliers • Gestion transparente des incidents avec les parties prenantes",
-    advice: "Maintenez et approfondissez votre expertise technique pour conserver crédibilité et pertinence. Un excellent communicant sans compétences techniques solides perd en impact.",
-    ideal_for: "Service Delivery Manager, IT Business Partner, Coordinateur projets techniques",
-    team_value: "Vous humanisez l'IT et facilitez l'adoption des solutions. Votre diplomatie résout les conflits et améliore la satisfaction utilisateurs.",
-    growth_areas: "Renforcez vos compétences techniques hands-on pour garder le contact avec la réalité terrain. Participez régulièrement à des interventions techniques."
-  },
-  strategique: { 
-    name: "Le Stratège", 
-    description: "Vous planifiez et orchestrez avec vision à long terme. Votre capacité à voir l'ensemble permet d'aligner infrastructure technique et objectifs business.",
-    strengths: "Roadmaps techniques cohérentes et réalistes • Excellente priorisation des investissements IT • Gestion complexe de projets multi-équipes • Vision d'ensemble évitant les silos techniques",
-    advice: "Restez connecté aux réalités opérationnelles quotidiennes. Une stratégie brillante déconnectée du terrain est vouée à l'échec. Échangez régulièrement avec les opérationnels.",
-    ideal_for: "Architecte d'entreprise, Directeur infrastructure, IT Manager",
-    team_value: "Vous donnez une direction claire et cohérente à l'évolution technique. Votre vision évite les investissements redondants et optimise les ressources.",
-    growth_areas: "Pratiquez l'exécution opérationnelle pour affiner votre compréhension des contraintes terrain. Les meilleures stratégies naissent de l'expérience pratique."
-  },
-  vigilant: { 
-    name: "Le Vigilant", 
-    description: "Vous surveillez constamment l'état de votre infrastructure. Votre monitoring proactif détecte les anomalies avant qu'elles ne deviennent des incidents.",
-    strengths: "Systèmes de monitoring complets et pertinents • Détection précoce des dégradations de performance • Analyse des tendances pour prédire les problèmes • Culture du dashboard et de la visualisation",
-    advice: "Évitez la fatigue d'alerte en affinant vos seuils de surveillance. Trop d'alertes tue l'alerte. Concentrez-vous sur les métriques vraiment critiques et actionnables.",
-    ideal_for: "Administrateur monitoring, SRE (Site Reliability Engineer), NOC Manager",
-    team_value: "Vous êtes les yeux de l'infrastructure. Votre veille permet d'agir avant que les utilisateurs ne soient impactés, garantissant une haute disponibilité.",
-    growth_areas: "Développez l'analyse prédictive et l'intelligence artificielle pour anticiper plutôt que réagir. Passez du monitoring réactif au monitoring prédictif."
-  },
-  problem_solver: { 
-    name: "Le Résolveur", 
-    description: "Vous adorez les défis techniques complexes et trouvez toujours une solution. Votre créativité technique et votre persévérance viennent à bout des problèmes les plus ardus.",
-    strengths: "Excellente capacité de troubleshooting sur problèmes complexes • Créativité pour trouver des solutions non conventionnelles • Persévérance face aux blocages techniques • Apprentissage rapide de nouvelles technologies",
-    advice: "Capitalisez sur vos résolutions en créant des bases de connaissances. Vos découvertes bénéficieront à toute l'équipe et éviteront de réinventer la roue.",
-    ideal_for: "Expert technique, Troubleshooter senior, Technical Lead",
-    team_value: "Vous déverrouillez les situations bloquantes. L'équipe sait qu'elle peut compter sur vous pour les problèmes que personne d'autre ne résout.",
-    growth_areas: "Formalisez votre méthodologie de résolution pour la transmettre. Votre talent serait décuplé en formant d'autres à votre approche."
-  },
-  collaboratif: {
-    name: "Le Collaboratif",
-    description: "Le travail d'équipe et le partage de connaissances sont au cœur de votre approche. Vous créez une dynamique positive et augmentez les compétences collectives.",
-    strengths: "Excellente synergie d'équipe grâce à votre attitude positive • Partage spontané de connaissances et mentoring informel • Facilitation de la communication inter-équipes • Culture du feedback constructif",
-    advice: "Développez également votre autonomie complète sur certains domaines. Être capable de gérer seul des situations critiques renforce votre valeur et votre polyvalence.",
-    ideal_for: "Team Leader technique, Scrum Master IT, Coach technique",
-    team_value: "Vous êtes le ciment de l'équipe. Votre attitude collaborative améliore l'ambiance et l'efficacité collective, réduisant les silos de connaissances.",
-    growth_areas: "Renforcez votre capacité à travailler en autonomie complète. Les meilleures personnes collaboratives savent aussi être indépendantes quand nécessaire."
-  },
-  optimiseur: {
-    name: "L'Optimiseur",
-    description: "Performances et efficacité maximales guident toutes vos actions. Votre obsession du tuning extrait le meilleur de chaque système.",
-    strengths: "Tuning système poussé pour performances optimales • Culture du benchmarking et de la mesure • Identification des goulots d'étranglement • Optimisation des coûts infrastructure (FinOps)",
-    advice: "Attention à ne pas sacrifier la maintenabilité pour quelques pourcents de performance. Parfois, une solution simple et stable vaut mieux qu'une optimisation complexe et fragile.",
-    ideal_for: "Performance Engineer, Architecte infrastructure, Capacity Planner",
-    team_value: "Vous maximisez le retour sur investissement matériel. Vos optimisations retardent les besoins d'upgrade et réduisent les coûts opérationnels.",
-    growth_areas: "Élargissez votre vision au-delà de la performance pure. Intégrez maintenabilité, évolutivité et simplicité dans vos critères d'optimisation."
-  }
-};
+        <div class="actions">
+          <button type="button" id="calcBtn">Calculer le profil</button>
+          <button type="button" class="secondary" id="resetBtn">Réinitialiser</button>
+          <button type="button" class="secondary" id="printBtn">Imprimer / Enregistrer</button>
+        </div>
 
-export default function ITPersonalityTest() {
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [showResults, setShowResults] = useState(false);
+        <div class="results" id="results" aria-live="polite"></div>
+      </form>
 
-  const handleAnswer = (questionId, profile) => {
-    const newAnswers = { ...answers, [questionId]: profile };
-    setAnswers(newAnswers);
+      <footer>
+        <strong>Mode d'emploi :</strong> Répondez honnêtement. <em>Le test est auto‑évalué — utile pour entretien, coaching, ou plan de formation.</em>
+      </footer>
+    </div>
+  </div>
 
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
-      setShowResults(true);
-    }
-  };
+  <script>
+    // Questions (20) réparties sur 6 dimensions
+    const questions = [
+      {id:1, text:"Je documente systématiquement mes interventions (tickets, scripts, procédures).", dim:'Rigueur'},
+      {id:2, text:"Je réussis souvent à résoudre des incidents complexes en autonomie.", dim:'Résolution'},
+      {id:3, text:"J'explique des solutions techniques à des personnes non techniques clairement.", dim:'Communication'},
+      {id:4, text:"Je collabore volontiers avec d'autres équipes pour résoudre un problème.", dim:'Travail d\'équipe'},
+      {id:5, text:"Je garde mon sang-froid lors d'une panne critique ou d'une montée en charge.", dim:'Gestion du stress'},
+      {id:6, text:"Je respecte systématiquement les règles de sécurité et les procédures de conformité.", dim:'Sécurité'},
+      {id:7, text:"Je planifie et priorise mes tâches pour éviter les urgences de dernière minute.", dim:'Rigueur'},
+      {id:8, text:"Je sais réaliser des diagnostics réseau/serveur efficacement.", dim:'Résolution'},
+      {id:9, text:"Je fournis des retours clairs et constructifs aux utilisateurs et collègues.", dim:'Communication'},
+      {id:10, text:"Je aide les nouveaux collègues à s'intégrer et à monter en compétences.", dim:'Travail d\'équipe'},
+      {id:11, text:"Je suis capable de prendre des décisions rapides quand la situation l'exige.", dim:'Gestion du stress'},
+      {id:12, text:"Je applique et mets à jour les correctifs et les politiques de sécurité régulièrement.", dim:'Sécurité'},
+      {id:13, text:"Je révise et teste mes changements avant de les déployer en production.", dim:'Rigueur'},
+      {id:14, text:"Je identifie rapidement la cause racine d'un incident.", dim:'Résolution'},
+      {id:15, text:"Je communique les délais et les étapes clairement lors d'une résolution.", dim:'Communication'},
+      {id:16, text:"Je participe aux revues post-mortem et j'en tire des actions concrètes.", dim:'Travail d\'équipe'},
+      {id:17, text:"Je garde une bonne productivité même quand les interruptions sont fréquentes.", dim:'Gestion du stress'},
+      {id:18, text:"Je détecte et signale proactivement les failles ou comportements suspects.", dim:'Sécurité'},
+      {id:19, text:"Je tiens mes documents et inventaires matériels à jour.", dim:'Rigueur'},
+      {id:20, text:"Je m'informe régulièrement des nouvelles technologies et bonnes pratiques.", dim:'Résolution'}
+    ];
 
-  const calculateResults = () => {
-    const profileCounts = {};
-    Object.values(answers).forEach(profile => {
-      profileCounts[profile] = (profileCounts[profile] || 0) + 1;
+    const dims = ['Rigueur','Résolution','Communication','Travail d\'équipe','Gestion du stress','Sécurité'];
+
+    // Render questions
+    const qContainer = document.getElementById('questions');
+    questions.forEach(q=>{
+      const div = document.createElement('div'); div.className='q';
+      const h = document.createElement('h4'); h.textContent = q.id + '. ' + q.text; div.appendChild(h);
+      const scale = document.createElement('div'); scale.className='scale';
+      for(let v=1; v<=5; v++){
+        const id = 'q'+q.id+'v'+v;
+        const input = document.createElement('input'); input.type='radio'; input.name='q'+q.id; input.id=id; input.value=v;
+        const label = document.createElement('label'); label.htmlFor=id; label.className='scale-btn'; label.textContent = v;
+        scale.appendChild(input); scale.appendChild(label);
+      }
+      const note = document.createElement('div'); note.style.marginTop='8px'; note.style.fontSize='13px'; note.style.color='var(--muted)'; note.textContent='1 = Pas du tout · 5 = Tout à fait';
+      div.appendChild(scale); div.appendChild(note);
+      qContainer.appendChild(div);
     });
 
-    const sorted = Object.entries(profileCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 2);
-
-    return sorted;
-  };
-
-  const resetTest = () => {
-    setCurrentQuestion(0);
-    setAnswers({});
-    setShowResults(false);
-  };
-
-  const goToQuestion = (index) => {
-    if (index < currentQuestion || answers[questions[index].id]) {
-      setCurrentQuestion(index);
-      setShowResults(false);
+    function getAnswers(){
+      const ans = {};
+      for(const q of questions){
+        const v = document.querySelector('input[name=q'+q.id+']:checked');
+        ans[q.id] = v ? Number(v.value) : null;
+      }
+      return ans;
     }
-  };
 
-  if (showResults) {
-    const results = calculateResults();
-    const total = Object.keys(answers).length;
-    const [primary, secondary] = results;
+    function scoreDimensions(ans){
+      const sums = {}; const counts = {};
+      dims.forEach(d=>{sums[d]=0;counts[d]=0});
+      for(const q of questions){
+        const val = ans[q.id];
+        if(val!=null){ sums[q.dim] += val; counts[q.dim] += 1 }
+      }
+      const result = {};
+      dims.forEach(d=>{
+        const avg = counts[d] ? (sums[d]/counts[d]) : 0;
+        result[d] = {sum:sums[d],count:counts[d],avg:Math.round(avg*100)/100};
+      });
+      return result;
+    }
 
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-            
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white">
-              <div className="flex items-center gap-4 mb-4">
-                <Award className="w-12 h-12" />
-                <div>
-                  <h2 className="text-4xl font-bold">Votre Profil IT</h2>
-                  <p className="text-blue-100 mt-1">Analyse de personnalité professionnelle</p>
-                </div>
-              </div>
-            </div>
+    function interpret(avg){
+      if(avg===0) return {level:'Non évalué',color:'#617085',text:'Aucune réponse pour cette dimension.'};
+      if(avg <= 2.4) return {level:'Faible',color:'#f43f5e',text:'Niveau faible — action recommandée.'};
+      if(avg <= 3.5) return {level:'Moyen',color:'#f59e0b',text:'Niveau moyen — opportunité d\'amélioration.'};
+      if(avg <= 4.2) return {level:'Bon',color:'#10b981',text:'Bon niveau — consolider et partager.'};
+      return {level:'Excellent',color:'#06b6d4',text:'Très bon niveau — atout pour l\'équipe.'};
+    }
 
-            {/* Main Profile */}
-            <div className="p-8">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 mb-6 border-2 border-blue-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                      1
-                    </div>
-                    <div>
-                      <h3 className="text-3xl font-bold text-gray-900">
-                        {profiles[primary[0]]?.name}
-                      </h3>
-                      <p className="text-blue-700 font-medium">Profil Dominant</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-bold text-blue-600">
-                      {Math.round((primary[1] / total) * 100)}%
-                    </div>
-                    <p className="text-sm text-gray-600">{primary[1]}/{total} réponses</p>
-                  </div>
-                </div>
-                
-                <p className="text-lg text-gray-700 mb-4 leading-relaxed">
-                  {profiles[primary[0]]?.description}
-                </p>
+    function buildAnalysis(dimScores){
+      // Suggestions per dimension
+      const suggestions = {
+        'Rigueur':{
+          weak:'Tendance à négliger documentation, tests ou inventaires — risque d\'erreurs répétées.',
+          actions:['Mettre en place des checklists pour déploiement','Automatiser la documentation (scripts, templates)','Planifier des revues régulières des inventaires']
+        },
+        'Résolution':{
+          weak:'Difficultés à diagnostiquer rapidement ou manque d\'autonomie sur incidents complexes.',
+          actions:['Créer un référentiel de diagnostics et runbooks','Organiser des sessions pair-programming/sessions tech','Suivre des formations sur diagnostics (networking, Linux, AD)']
+        },
+        'Communication':{
+          weak:'Explications techniques trop techniques ou manque d\'information aux parties prenantes.',
+          actions:['S'entraîner à simplifier le langage (ex: 1 phrase claire)','Envoyer des comptes-rendus concis après intervention','Faire des ateliers de communication client interne']
+        },
+        "Travail d'équipe":{
+          weak:'Travail en silo et faible partage des connaissances.',
+          actions:['Organiser des revues post-mortem et partage des incidents','Mettre en place des binômes pour les on‑call','Encourager le mentoring interne']
+        },
+        'Gestion du stress':{
+          weak:'Réactions sous pression pouvant altérer la qualité des actions.',
+          actions:['Simulations d\'incidents pour s\'habituer aux pics','Techniques de respiration et micro-pauses','Définir rôles clairs lors des incidents (runbook)']
+        },
+        'Sécurité':{
+          weak:'Prise en compte insuffisante des risques et des mises à jour.',
+          actions:['Politique de patching et revue des accès','Formation régulière sécurité (phishing, MFA, least privilege)','Automatiser alerts et scans de vulnérabilités']
+        }
+      };
 
-                <div className="grid md:grid-cols-2 gap-4 mt-6">
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                      <h4 className="font-semibold text-green-900">Points Forts</h4>
-                    </div>
-                    <p className="text-gray-700 text-sm">
-                      {profiles[primary[0]]?.strengths}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-amber-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                      <h4 className="font-semibold text-amber-900">Conseil de Développement</h4>
-                    </div>
-                    <p className="text-gray-700 text-sm">
-                      {profiles[primary[0]]?.advice}
-                    </p>
-                  </div>
-                </div>
-              </div>
+      let html = '';
+      let overallSum = 0, overallCount = 0;
+      for(const d of dims){
+        const obj = dimScores[d];
+        overallSum += obj.sum; overallCount += obj.count;
+        const interp = interpret(obj.avg);
+        const pct = obj.avg ? Math.round((obj.avg/5)*100) : 0;
+        html += `<div class="dim"><h5>${d} — ${interp.level} (${obj.avg}/5)</h5>`;
+        html += `<div class="bar"><div class="fill" style="width:${pct}%"></div></div>`;
+        html += `<p style="margin:8px 0;color:var(--muted)">${interp.text}</p>`;
+        // Weak points and actions
+        html += `<strong>Signes faibles possibles :</strong><div style="margin:6px 0;color:#ffd9c7">${suggestions[d].weak}</div>`;
+        html += `<strong>Axes d'amélioration :</strong><ul>`;
+        suggestions[d].actions.forEach(a=>{ html += `<li>${a}</li>` });
+        html += `</ul></div>`;
+      }
 
-              {/* Secondary Profile */}
-              {secondary && (
-                <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-8 border-2 border-slate-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-slate-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                        2
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900">
-                          {profiles[secondary[0]]?.name}
-                        </h3>
-                        <p className="text-slate-700 font-medium">Profil Secondaire</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-slate-600">
-                        {Math.round((secondary[1] / total) * 100)}%
-                      </div>
-                      <p className="text-sm text-gray-600">{secondary[1]}/{total} réponses</p>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-700 mb-4 leading-relaxed">
-                    {profiles[secondary[0]]?.description}
-                  </p>
+      const overallAvg = overallCount ? Math.round((overallSum/overallCount)*100)/100 : 0;
+      const overallInterp = interpret(overallAvg);
+      const profile = profileLabel(overallAvg, dimScores);
 
-                  <div className="grid md:grid-cols-2 gap-4 mt-6">
-                    <div className="bg-white rounded-lg p-4 border border-green-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="w-5 h-5 text-green-600" />
-                        <h4 className="font-semibold text-green-900">Points Forts</h4>
-                      </div>
-                      <p className="text-gray-700 text-sm">
-                        {profiles[secondary[0]]?.strengths}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 border border-amber-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                        <h4 className="font-semibold text-amber-900">Conseil de Développement</h4>
-                      </div>
-                      <p className="text-gray-700 text-sm">
-                        {profiles[secondary[0]]?.advice}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+      html = `<div style="margin-bottom:12px"><h4>Profil global — ${overallInterp.level} (${overallAvg}/5)</h4><p style="color:var(--muted)">${profile}</p></div>` + html;
 
-              {/* Synthesis */}
-              <div className="mt-8 bg-indigo-50 rounded-xl p-6 border border-indigo-200">
-                <h4 className="font-bold text-indigo-900 text-lg mb-3">💡 Synthèse de votre profil</h4>
-                <p className="text-gray-700 leading-relaxed">
-                  Votre profil combine les qualités de <strong>{profiles[primary[0]]?.name}</strong> et de <strong>{profiles[secondary[0]]?.name}</strong>. 
-                  Cette combinaison vous permet d'aborder les défis techniques avec {profiles[primary[0]]?.name.toLowerCase() === "l'analyste" ? "méthode et rigueur" : "efficacité et pragmatisme"} 
-                  tout en {profiles[secondary[0]]?.name.toLowerCase() === "le communicant" ? "maintenant une excellente communication" : "gardant une vision stratégique"}. 
-                  Vous êtes particulièrement adapté aux rôles nécessitant ces deux dimensions complémentaires.
-                </p>
-              </div>
+      return {html, overallAvg};
+    }
 
-              <button
-                onClick={resetTest}
-                className="w-full mt-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition font-semibold text-lg shadow-lg"
-              >
-                Recommencer le test
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    function profileLabel(overallAvg, dimScores){
+      // simple multi-dim profile description
+      const strong = Object.entries(dimScores).filter(([k,v])=>v.avg>=4.3).map(a=>a[0]);
+      const weak = Object.entries(dimScores).filter(([k,v])=>v.avg>0 && v.avg<=2.4).map(a=>a[0]);
+      let lines = [];
+      if(strong.length) lines.push('Points forts : ' + strong.join(', ')+'.');
+      if(weak.length) lines.push('Points faibles : ' + weak.join(', ')+'.');
+      if(!strong.length && !weak.length) lines.push('Profil équilibré — ni points très faibles, ni forces marquées.');
+      lines.push('Score global calculé comme la moyenne des réponses.');
+      return lines.join(' ');
+    }
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
-  const question = questions[currentQuestion];
+    // Event handlers
+    document.getElementById('calcBtn').addEventListener('click', ()=>{
+      const ans = getAnswers();
+      // Check unanswered
+      const unanswered = Object.values(ans).filter(v=>v==null).length;
+      if(unanswered>0){
+        if(!confirm(`Vous n'avez pas répondu à ${unanswered} question(s). Continuer et calculer quand même ?`)) return;
+      }
+      const dimScores = scoreDimensions(ans);
+      const analysis = buildAnalysis(dimScores);
+      const resDiv = document.getElementById('results');
+      resDiv.innerHTML = analysis.html + `<div class="summary">Résumé recommandé:\n- Score global: ${analysis.overallAvg}/5\n- ${new Date().toLocaleString()}\n\nConseils personnalisés : consultez chaque dimension ci‑dessus pour actions concrètes.</div>`;
+      // animate bars
+      document.querySelectorAll('.dim').forEach(d=>{
+        const fill = d.querySelector('.fill');
+        const percent = fill.style.width;
+        setTimeout(()=>{ fill.style.width = percent; },50);
+      });
+    });
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <User className="w-8 h-8 text-blue-600" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Test de Personnalité IT</h1>
-              <p className="text-gray-600">Techniciens & Administrateurs Systèmes/Réseaux</p>
-            </div>
-          </div>
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      if(!confirm('Réinitialiser toutes les réponses ?')) return;
+      document.querySelectorAll('input[type=radio]').forEach(i=>i.checked=false);
+      document.getElementById('results').innerHTML='';
+    });
 
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Question {currentQuestion + 1} sur {questions.length}</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 h-3 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 mb-6">
-            {questions.map((q, index) => (
-              <button
-                key={q.id}
-                onClick={() => goToQuestion(index)}
-                className={`w-10 h-10 rounded-full text-sm font-medium transition ${
-                  answers[q.id]
-                    ? 'bg-green-500 text-white shadow-md'
-                    : index === currentQuestion
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-200 text-gray-600 cursor-not-allowed'
-                }`}
-                disabled={index > currentQuestion && !answers[q.id]}
-              >
-                {index + 1}
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
-              {question.text}
-            </h2>
-
-            <div className="space-y-3">
-              {question.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(question.id, option.profile)}
-                  className="w-full p-4 text-left border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full border-2 border-gray-300 group-hover:border-blue-500 flex items-center justify-center flex-shrink-0">
-                      {answers[question.id] === option.profile && (
-                        <CheckCircle className="w-5 h-5 text-blue-600" />
-                      )}
-                    </div>
-                    <span className="text-gray-700 group-hover:text-gray-900">
-                      {option.text}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {currentQuestion > 0 && (
-            <button
-              onClick={() => setCurrentQuestion(currentQuestion - 1)}
-              className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Question précédente
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+    document.getElementById('printBtn').addEventListener('click', ()=>{
+      window.print();
+    });
+  </script>
+</body>
+</html>
